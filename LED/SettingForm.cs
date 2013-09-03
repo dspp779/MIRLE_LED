@@ -7,11 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Ini;
+using INI;
 using System.Threading;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using GeFanuc.iFixToolkit.Adapter;
 
 namespace LED
 {
@@ -60,7 +59,7 @@ namespace LED
             im_colorButton.ForeColorChanged += new EventHandler(InputData_Change);
 
             // start eda data refresh worker
-            ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshPreviewWorker));
+            //ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshPreviewWorker));
         }
 
         private void initDataGrid()
@@ -121,7 +120,7 @@ namespace LED
             Invoke(new UIHandler(RefreshStatus), new Object[] { "ini設定檔保存完成" });
         }
 
-        private void RefreshPreviewWorker(object o)
+        /*private void RefreshPreviewWorker(object o)
         {
             IMSetting ims = new IMSetting();
             while (true)
@@ -170,7 +169,7 @@ namespace LED
                     SpinWait.SpinUntil(() => refreshSignal, 1000);
                 }
             }
-        }
+        }*/
 
         delegate void UIHandler(string str);
         private void RefreshPreview(string str)
@@ -191,6 +190,7 @@ namespace LED
                 presentIM.set(im_string.Text, im_tag.Text, im_format.Text, im_unit.Text, im_colorButton.ForeColor.ToArgb());
                 refreshSignal = true;
             }
+            RefreshPreview(" ");
         }
 
         private void inputButton_Click(object sender, EventArgs e)
@@ -314,6 +314,7 @@ namespace LED
                 im_unit.Text = IMList[index].unit;
                 im_colorButton.ForeColor = Color.FromArgb(IMList[index].color);
             }
+            RefreshPreview(" ");
         }
 
         private void im_colorButton_Click(object sender, EventArgs e)
