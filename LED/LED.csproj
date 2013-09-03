@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GeFanuc.iFixToolkit.Adapter">
+      <HintPath>..\..\..\..\..\..\..\Program Files\GE Fanuc\Proficy iFIX Toolkits\iFIX Integration Toolkit\GeFanuc.iFixToolkit.Adapter\GeFanuc.iFixToolkit.Adapter.dll</HintPath>
+    </Reference>
     <Reference Include="INI">
       <HintPath>..\INI\bin\Debug\INI.dll</HintPath>
     </Reference>

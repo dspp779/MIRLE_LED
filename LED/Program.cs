@@ -16,7 +16,8 @@ namespace LED
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new CPower_CSharp.Form1());
+            //Application.Run(new CPower_CSharp.Form1());
+            Application.Run(new SettingForm());
         }
     }
 }
