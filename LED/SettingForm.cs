@@ -165,7 +165,7 @@ namespace LED
                 }
                 catch (DllNotFoundException)
                 {
-                    RefreshMessage("????");
+                    RefreshMessage("請確認是否開啟ifix");
                     RefreshStatus("請確認是否開啟ifix");
                 }
                 catch (Exception ex)
