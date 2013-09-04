@@ -541,7 +541,7 @@ namespace CPower_CSharp
 				int nPort = Convert.ToByte(m_cmbPort.SelectedIndex + 1);
 				String strPort = "COM" + nPort.ToString();
 				int nBaudrate = Convert.ToInt32(m_lBaudtbl[m_cmbBaudrate.SelectedIndex]);
-				CP5200.CP5200_RS232_InitEx( Marshal.StringToHGlobalAnsi(strPort), nBaudrate, m_nTimeout);
+				CP52000.CP5200_RS232_InitEx( Marshal.StringToHGlobalAnsi(strPort), nBaudrate, m_nTimeout);
 			}
 			else
 			{
@@ -550,7 +550,7 @@ namespace CPower_CSharp
 				int  nIPPort  = Convert.ToInt32(m_txtIPPort.Text) ;
                 if (dwIPAddr != 0 && dwIDCode != 0)
                 {
-                    CP5200.CP5200_Net_Init(dwIPAddr, nIPPort, dwIDCode, m_nTimeout);
+                    CP52000.CP5200_Net_Init(dwIPAddr, nIPPort, dwIDCode, m_nTimeout);
                 }
 
 			}
@@ -590,11 +590,11 @@ namespace CPower_CSharp
 			InitComm();	
 			if (0 == m_nCommType) 
 			{
-				ret = CP5200.CP5200_RS232_SplitScreen( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 2,  nWndRect);
+				ret = CP52000.CP5200_RS232_SplitScreen( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 2,  nWndRect);
 			}
 			else 
 			{
-				ret = CP5200.CP5200_Net_SplitScreen( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 2,  nWndRect);
+				ret = CP52000.CP5200_Net_SplitScreen( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 2,  nWndRect);
 			}
 
 			if( ret >= 0 )
@@ -615,12 +615,12 @@ namespace CPower_CSharp
             // Network
 	        if ( m_nCommType == 1)
 			{
-                nRet = CP5200.CP5200_Net_SendText(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtText.Text), 0xFF, 16, 3, 0, 3, 5);
+                nRet = CP52000.CP5200_Net_SendText(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtText.Text), 0xFF, 16, 3, 0, 3, 5);
             }
             // RS232/485
 			else
 			{
-				nRet = CP5200.CP5200_RS232_SendText(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtText.Text), 0xFF, 16, 3, 0, 3, 5);
+				nRet = CP52000.CP5200_RS232_SendText(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtText.Text), 0xFF, 16, 3, 0, 3, 5);
 			}
 	
 			if( nRet >= 0 )
@@ -643,13 +643,13 @@ namespace CPower_CSharp
 	
 			if ( m_nCommType == 1) //網口
 			{
-				nRet = CP5200.CP5200_Net_SendPicture(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex,0, 0, 
+				nRet = CP52000.CP5200_Net_SendPicture(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex,0, 0, 
 					nWndRect[2 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[0 + m_cmbWndNo.SelectedIndex * 4], nWndRect[3 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[1 + m_cmbWndNo.SelectedIndex * 4],
 					Marshal.StringToHGlobalAnsi(m_txtPict.Text), 1, 0, 3, 0);
 			}
 			else //串口
 			{
-				nRet = CP5200.CP5200_RS232_SendPicture(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex,0, 0, 
+				nRet = CP52000.CP5200_RS232_SendPicture(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex,0, 0, 
 					nWndRect[2 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[0 + m_cmbWndNo.SelectedIndex * 4], nWndRect[3 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[1 + m_cmbWndNo.SelectedIndex * 4],
 					Marshal.StringToHGlobalAnsi(m_txtPict.Text), 1, 0, 3, 0);
 			}
@@ -673,12 +673,12 @@ namespace CPower_CSharp
 		
 			if ( m_nCommType == 1) //網口
 			{
-				nRet = CP5200.CP5200_Net_SendStatic(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtStaticText.Text), 0xFF, 16, 0, 
+				nRet = CP52000.CP5200_Net_SendStatic(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtStaticText.Text), 0xFF, 16, 0, 
 					0, 0, nWndRect[2 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[0 + m_cmbWndNo.SelectedIndex * 4], nWndRect[3 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[1 + m_cmbWndNo.SelectedIndex * 4]);
 			}
 			else //串口
 			{
-				nRet = CP5200.CP5200_RS232_SendStatic(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtStaticText.Text), 0xFF, 16, 0, 
+				nRet = CP52000.CP5200_RS232_SendStatic(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtStaticText.Text), 0xFF, 16, 0, 
 					0, 0, nWndRect[2 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[0 + m_cmbWndNo.SelectedIndex * 4], nWndRect[3 + m_cmbWndNo.SelectedIndex * 4] - nWndRect[1 + m_cmbWndNo.SelectedIndex * 4]);
 			}
 
@@ -699,11 +699,11 @@ namespace CPower_CSharp
 	
 			if ( m_nCommType == 1) //網口
 			{
-				nRet = CP5200.CP5200_Net_SendClock( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, 3, 0, 7, 7, 1, 255, 255, 255, Marshal.StringToHGlobalAnsi("Date"));
+				nRet = CP52000.CP5200_Net_SendClock( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, 3, 0, 7, 7, 1, 255, 255, 255, Marshal.StringToHGlobalAnsi("Date"));
 			}
 			else //串口
 			{
-				nRet = CP5200.CP5200_RS232_SendClock( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, 3, 0, 7, 7, 1, 255, 255, 255, Marshal.StringToHGlobalAnsi("Date"));
+				nRet = CP52000.CP5200_RS232_SendClock( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, 3, 0, 7, 7, 1, 255, 255, 255, Marshal.StringToHGlobalAnsi("Date"));
 			}
 
 			if( nRet >= 0 )
@@ -733,11 +733,11 @@ namespace CPower_CSharp
 	
 			if ( m_nCommType == 1) //網口
 			{
-				nRet = CP5200.CP5200_Net_SetTime(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), byTimeInfo) ; 
+				nRet = CP52000.CP5200_Net_SetTime(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), byTimeInfo) ; 
 			}
 			else //串口
 			{
-				nRet = CP5200.CP5200_RS232_SetTime(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), byTimeInfo) ; 
+				nRet = CP52000.CP5200_RS232_SetTime(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), byTimeInfo) ; 
 			}
 
 			if( nRet >= 0 )
@@ -760,11 +760,11 @@ namespace CPower_CSharp
 
 			if ( m_nCommType == 1) //網口
 			{
-				nRet = CP5200.CP5200_Net_PlaySelectedPrg(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), nProNo, 1, 0);
+				nRet = CP52000.CP5200_Net_PlaySelectedPrg(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), nProNo, 1, 0);
 			}
 			else //串口
 			{
-				nRet = CP5200.CP5200_RS232_PlaySelectedPrg(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), nProNo, 1, 0);
+				nRet = CP52000.CP5200_RS232_PlaySelectedPrg(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), nProNo, 1, 0);
 			}
 
 			if( nRet >= 0 )
@@ -793,38 +793,38 @@ namespace CPower_CSharp
 		private void btnMakProgram_Click(object sender, System.EventArgs e)
 		{	
 			Boolean bRet = false;
-			IntPtr hObj = CP5200.CP5200_Program_Create( Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 0x77 );
+			IntPtr hObj = CP52000.CP5200_Program_Create( Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 0x77 );
 			if ( hObj != IntPtr.Zero)
 			{
 				//分左右兩個窗口，
 				int[] nWndRect = new int[8];
 				GetSplitWnd( nWndRect );
-				if ( CP5200.CP5200_Program_SetProperty( hObj , 0xFFFF , 1 ) > 0 )
+				if ( CP52000.CP5200_Program_SetProperty( hObj , 0xFFFF , 1 ) > 0 )
 				{
 					int nItemCnt = 0;
 					//0號窗口放文字，
-					int nWndNo = CP5200.CP5200_Program_AddPlayWindow( hObj , nWndRect[0], nWndRect[1], nWndRect[2] - nWndRect[0], nWndRect[3] - nWndRect[1] );
+					int nWndNo = CP52000.CP5200_Program_AddPlayWindow( hObj , nWndRect[0], nWndRect[1], nWndRect[2] - nWndRect[0], nWndRect[3] - nWndRect[1] );
 					if ( nWndNo >= 0)
 					{
-						CP5200.CP5200_Program_SetWindowProperty( hObj , nWndNo , 0x30 , 1 ); //設置窗口邊框
+						CP52000.CP5200_Program_SetWindowProperty( hObj , nWndNo , 0x30 , 1 ); //設置窗口邊框
 						//添加文本節目						
-						if ( CP5200.CP5200_Program_AddText(hObj, nWndNo, Marshal.StringToHGlobalAnsi(m_txtText.Text), 16, 0xFF, 0xFFFF, 100, 3 ) >= 0)
+						if ( CP52000.CP5200_Program_AddText(hObj, nWndNo, Marshal.StringToHGlobalAnsi(m_txtText.Text), 16, 0xFF, 0xFFFF, 100, 3 ) >= 0)
 							nItemCnt++;
 					}
 	
 					//1號窗口放圖片
-					nWndNo = CP5200.CP5200_Program_AddPlayWindow( hObj , nWndRect[4], nWndRect[5], nWndRect[6] - nWndRect[4], nWndRect[7] - nWndRect[5] );
+					nWndNo = CP52000.CP5200_Program_AddPlayWindow( hObj , nWndRect[4], nWndRect[5], nWndRect[6] - nWndRect[4], nWndRect[7] - nWndRect[5] );
 					if ( nWndNo >= 0)
 					{
 						//添加圖片節目
-						if ( CP5200.CP5200_Program_AddPicture(hObj,nWndNo,  Marshal.StringToHGlobalAnsi(m_txtPict.Text), 2, 0xFFFF, 100, 3, 0) >= 0)
+						if ( CP52000.CP5200_Program_AddPicture(hObj,nWndNo,  Marshal.StringToHGlobalAnsi(m_txtPict.Text), 2, 0xFFFF, 100, 3, 0) >= 0)
 							nItemCnt++;
 					}
 
-					if ( nItemCnt > 0 && CP5200.CP5200_Program_SaveToFile( hObj, GetProgramFileName()) >= 0 )
+					if ( nItemCnt > 0 && CP52000.CP5200_Program_SaveToFile( hObj, GetProgramFileName()) >= 0 )
 						bRet = true;
 				}
-				CP5200.CP5200_Program_Destroy( hObj);
+				CP52000.CP5200_Program_Destroy( hObj);
 			}
     
 			if( bRet  )
@@ -840,15 +840,15 @@ namespace CPower_CSharp
 		private void btnMakePlaybill_Click(object sender, System.EventArgs e)
 		{
 			Boolean bRet = false;
-			IntPtr hObj = CP5200.CP5200_Playbill_Create( Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 0x77);
+			IntPtr hObj = CP52000.CP5200_Playbill_Create( Convert.ToInt32(m_txtWidth.Text), Convert.ToInt32(m_txtHeight.Text), 0x77);
 			if ( hObj != IntPtr.Zero)
 			{		
-				if ( CP5200.CP5200_Playbill_AddFile( hObj, GetProgramFileName()) >= 0)
+				if ( CP52000.CP5200_Playbill_AddFile( hObj, GetProgramFileName()) >= 0)
 				{
-					if ( CP5200.CP5200_Playbill_SaveToFile( hObj, GetPlaybillFileName()) == 0)
+					if ( CP52000.CP5200_Playbill_SaveToFile( hObj, GetPlaybillFileName()) == 0)
 						bRet = true;
 				}	
-				CP5200.CP5200_Playbill_Destroy(hObj);
+				CP52000.CP5200_Playbill_Destroy(hObj);
 			}
 
 			if( bRet  )
@@ -868,25 +868,25 @@ namespace CPower_CSharp
  			int nUploadCnt = 0 ;
  			if ( m_nCommType == 1) //網口
  			{
- 				if ( 0 == CP5200.CP5200_Net_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetProgramFileName(), GetProgramFileName()) )
+ 				if ( 0 == CP52000.CP5200_Net_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetProgramFileName(), GetProgramFileName()) )
  					nUploadCnt++;
  
- 				if ( 0 == CP5200.CP5200_Net_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetPlaybillFileName(), GetPlaybillFileName()) )
+ 				if ( 0 == CP52000.CP5200_Net_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetPlaybillFileName(), GetPlaybillFileName()) )
  					nUploadCnt++;
  
  				if ( nUploadCnt > 0)
- 					CP5200.CP5200_Net_RestartApp( Convert.ToByte(m_cmbCardID.SelectedIndex + 1) );
+ 					CP52000.CP5200_Net_RestartApp( Convert.ToByte(m_cmbCardID.SelectedIndex + 1) );
  			}
  			else //串口
  			{
- 				if ( 0 == CP5200.CP5200_RS232_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetProgramFileName(), GetProgramFileName()) )
+ 				if ( 0 == CP52000.CP5200_RS232_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetProgramFileName(), GetProgramFileName()) )
  					nUploadCnt++;
  		
- 				if ( 0 == CP5200.CP5200_RS232_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetPlaybillFileName(), GetPlaybillFileName()) )
+ 				if ( 0 == CP52000.CP5200_RS232_UploadFile( Convert.ToByte(m_cmbCardID.SelectedIndex + 1), GetPlaybillFileName(), GetPlaybillFileName()) )
  					nUploadCnt++;
  
  				if ( nUploadCnt > 0)
- 					CP5200.CP5200_RS232_RestartApp( Convert.ToByte(m_cmbCardID.SelectedIndex + 1) );
+ 					CP52000.CP5200_RS232_RestartApp( Convert.ToByte(m_cmbCardID.SelectedIndex + 1) );
  			}
 
 		

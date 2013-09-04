@@ -19,8 +19,12 @@ namespace LED
 {
     public partial class SettingForm : Form
     {
-        private IniFile iniFile = new IniFile(Application.StartupPath + @"\setting.ini");
-        private string binPath = Application.StartupPath + @"\setting.bin";
+        // file path for ini setting
+        private readonly static IniFile iniFile = new IniFile(Application.StartupPath + @"\setting.ini");
+        // file path for instant message list
+        private readonly static string binPath = Application.StartupPath + @"\setting.bin";
+
+
         private List<IMSetting> IMList;
         private InstantMessage presentIM = new InstantMessage();
 
@@ -134,7 +138,6 @@ namespace LED
         // data refresh worker
         private void RefreshPreviewWorker(object o)
         {
-            int i = 0;
             IMSetting ims = new IMSetting();
             while (true)
             {
@@ -144,22 +147,28 @@ namespace LED
                     {
                         ims.set(presentIM);
 
+                        refreshSignal = false;
+
                         float f;
                         short nErr = Eda.GetOneFloat(ims.node, ims.tag, ims.field, out f);
 
                         if (nErr != FixError.FE_OK)
                         {
-                            RefreshPreview("????" + i);
+                            RefreshMessage("????");
                         }
                         else
                         {
                             string str = string.Format("{0:" + ims.format.Replace('x', '0') + "}", f);
-                            RefreshPreview(str);
+                            RefreshMessage(presentIM.priorString + str + presentIM.unit);
                         }
-                        refreshSignal = false;
                     }
                 }
-                catch (Exception)
+                catch (DllNotFoundException)
+                {
+                    RefreshMessage("????");
+                    RefreshStatus("請確認是否開啟ifix");
+                }
+                catch (Exception ex)
                 {
                     if (this.IsDisposed)
                     {
@@ -169,7 +178,7 @@ namespace LED
                     {
                         try
                         {
-                            RefreshPreview("????" + i);
+                            RefreshMessage(ex.Message);
                         }
                         catch (ObjectDisposedException)
                         {
@@ -178,18 +187,22 @@ namespace LED
                 }
                 finally
                 {
-                    i++;
                     SpinWait.SpinUntil(() => refreshSignal, 1000);
                 }
             }
         }
 
-        #region -- UI --
-        private void RefreshPreview(string val)
+        #region -- UI delegate --
+
+        delegate void UIHandler(string str);
+        private void RefreshMessage(string str)
         {
-            string str = presentIM.priorString + val + presentIM.unit;
+            if (Disposing || IsDisposed)
+            {
+                return;
+            }
             //refresh preview area
-            Invoke(new UIHandler(DoRefreshPreview), new Object[] { str });
+            Invoke(new UIHandler(RefreshPreview), new Object[] { str });
 
             //CP5200_SendText(PreviewResult.Text);
 
@@ -200,47 +213,23 @@ namespace LED
             // delete temporal image
             tempImg.release();
         }
-        delegate void UIHandler(string str);
-        private void DoRefreshPreview(string str)
+        private void RefreshPreview(string str)
         {
             PreviewResult.Text = str;
             PreviewResult.ForeColor = Color.FromArgb(presentIM.color);
         }
         private void RefreshStatus(string str)
         {
-            toolStripStatusLabel.Text = str;
+            Invoke(new UIHandler((o)=> toolStripStatusLabel.Text = str), new Object[] { null });
         }
 
-        private void InputData_Change(object sender, EventArgs e)
-        {
-            lock (signalLock)
-            {
-                presentIM.set(im_string.Text, im_tag.Text, im_format.Text, im_unit.Text, im_colorButton.ForeColor.ToArgb());
-                refreshSignal = true;
-            }
-        }
+        #endregion
 
-        private void inputButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                inputIM();
-                // save modification
-                saveIMList();
-            }
-            catch (ArgumentException ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-            // clear selection and reset input button
-            dataGridView_IM.ClearSelection();
-            inputButton.Text = "Add";
-        }
+        #region -- IM manipulation --
 
         private void inputIM()
         {
-            // modify selected
+            // modify selected cells
             if (dataGridView_IM.SelectedCells.Count > 1)
             {
                 foreach (DataGridViewTextBoxCell cell in dataGridView_IM.SelectedCells)
@@ -248,6 +237,7 @@ namespace LED
                     setIMData(cell);
                 }
             }
+            // modify row the only selected cell belongs to
             else if (dataGridView_IM.SelectedCells.Count == 1)
             {
                 setIM(dataGridView_IM.CurrentRow.Index, presentIM.priorString, presentIM.source,
@@ -274,6 +264,7 @@ namespace LED
             setRow(index, str, tag, format, unit, Color.FromArgb(color));
         }
 
+        // dataGirdView refresher
         private void addRow(string str, string tag, string format, string unit, Color color)
         {
             // add row
@@ -324,8 +315,25 @@ namespace LED
                     = Color.FromArgb(presentIM.color);
             }
         }
-        
 
+        #endregion
+
+        #region -- event handler --
+
+        // input data change handler
+        private void InputData_Change(object sender, EventArgs e)
+        {
+            presentIM.set(im_string.Text, im_tag.Text, im_format.Text, im_unit.Text, im_colorButton.ForeColor.ToArgb());
+            if (!refreshSignal)
+            {
+                lock (signalLock)
+                {
+                    refreshSignal = true;
+                }
+            }
+        }
+        
+        // color event handler
         private void im_colorButton_Click(object sender, EventArgs e)
         {
             if (im_colorDialog.ShowDialog() == DialogResult.OK)
@@ -340,6 +348,7 @@ namespace LED
             im_colorButton.BackColor = luma < 128 ? Color.White : Color.Black;
         }
 
+        //dataGridView handler
         private void dataGridView_IM_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
         {
             IMList.RemoveAt(e.RowIndex);
@@ -360,6 +369,7 @@ namespace LED
             }
         }
 
+
         private void button_save_Click(object sender, EventArgs e)
         {
             try
@@ -371,6 +381,25 @@ namespace LED
                 MessageBox.Show(ex.Message);
             }
         }
+        private void inputButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                inputIM();
+                // save modification
+                saveIMList();
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+            // clear selection
+            dataGridView_IM.ClearSelection();
+            // reset input button
+            inputButton.Text = "Add";
+        }
+
         #endregion
 
         #region -- CP5200 --
@@ -390,7 +419,7 @@ namespace LED
                 int nIPPort = 5200;
                 if (dwIPAddr != 0 && dwIDCode != 0)
                 {
-                    CP5200.CP5200_Net_Init(dwIPAddr, nIPPort, dwIDCode, m_nTimeout);
+                    CP52000.CP5200_Net_Init(dwIPAddr, nIPPort, dwIDCode, m_nTimeout);
                 }
         }
 
@@ -400,15 +429,15 @@ namespace LED
             InitComm();
             int nRet;
             // Network
-            nRet = CP5200.CP5200_Net_SendText(Convert.ToByte(1), 0, Marshal.StringToHGlobalAnsi(str), 0xFF, 16, 3, 0, 3, 5);
-            
+            nRet = CP52000.CP5200_Net_SendText(Convert.ToByte(1), 0, Marshal.StringToHGlobalAnsi(str), 0xFF, 16, 3, 0, 3, 5);
+
             if (nRet >= 0)
             {
-                Invoke(new UIHandler(RefreshStatus), new Object[] { "Success" });
+                RefreshStatus("Send Message to CP5200 Success");
             }
             else
             {
-                Invoke(new UIHandler(RefreshStatus), new Object[] { "Fail" });
+                RefreshStatus("Send Message to CP5200 Fail");
             }
         }
 
@@ -418,16 +447,16 @@ namespace LED
             InitComm();
             int nRet = 0;
             // Network
-            nRet = CP5200.CP5200_Net_SendPicture(Convert.ToByte(1), 0, 0, 0, img.Width, img.Height,
+            nRet = CP52000.CP5200_Net_SendPicture(Convert.ToByte(1), 0, 0, 0, img.Width, img.Height,
                     Marshal.StringToHGlobalAnsi(img.path), 1, 0, 3, 0);
 
             if (nRet >= 0)
             {
-                Invoke(new UIHandler(RefreshStatus), new Object[] { "Success" });
+                RefreshStatus("Send Message to CP5200 Success");
             }
             else
             {
-                Invoke(new UIHandler(RefreshStatus), new Object[] { "Fail" });
+                RefreshStatus("Send Message to CP5200 Fail");
             }
         }
         #endregion

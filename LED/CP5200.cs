@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 
 namespace CPower_CSharp
 {
-    public class CP5200
+    public class CP52000
     {
-        private const string m_strPath = @"CP5200\CP5200.dll";
+        private const string m_strPath = @"CP5200.dll";
 
 		//playbill
 		[DllImport(m_strPath, CharSet = CharSet.Auto)]
