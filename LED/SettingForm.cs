@@ -30,6 +30,8 @@ namespace LED
         // CP5200 LED controller related variable
         private int m_nTimeout = 600;
 
+        #region -- initialization --
+
         public SettingForm()
         {
             InitializeComponent();
@@ -79,6 +81,8 @@ namespace LED
                 setRow(i++, im.priorString, im.source, im.format, im.unit, Color.FromArgb(im.color));
             }
         }
+
+        #endregion
 
         #region -- settings --
         private void loadIMList()
@@ -140,9 +144,8 @@ namespace LED
                     {
                         ims.set(presentIM);
 
-                        StringBuilder sbData = new StringBuilder(80);
-                        short nErr = Eda.GetOneAscii(ims.node, ims.tag, ims.field, sbData);
-                        String str = sbData.ToString();
+                        float f;
+                        short nErr = Eda.GetOneFloat(ims.node, ims.tag, ims.field, out f);
 
                         if (nErr != FixError.FE_OK)
                         {
@@ -150,8 +153,8 @@ namespace LED
                         }
                         else
                         {
-                            str = string.Format("{0:" + ims.format.Replace('x', '0') + "}", float.Parse(str));
-                            RefreshPreview(str + i);
+                            string str = string.Format("{0:" + ims.format.Replace('x', '0') + "}", f);
+                            RefreshPreview(str);
                         }
                         refreshSignal = false;
                     }
@@ -182,12 +185,19 @@ namespace LED
         }
 
         #region -- UI --
-        private void RefreshPreview(string str)
+        private void RefreshPreview(string val)
         {
-            Invoke(new UIHandler(DoRefreshPreview), new Object[] { presentIM.priorString + str + presentIM.unit });
+            string str = presentIM.priorString + val + presentIM.unit;
+            //refresh preview area
+            Invoke(new UIHandler(DoRefreshPreview), new Object[] { str });
+
             //CP5200_SendText(PreviewResult.Text);
+
+            // create temporal image
             TextImage tempImg = new TextImage(str, Font, Color.FromArgb(presentIM.color), Color.Black);
-            CP5200_SendImg(tempImg.path);
+            // send temporal image
+            CP5200_SendImg(tempImg);
+            // delete temporal image
             tempImg.release();
         }
         delegate void UIHandler(string str);
@@ -402,14 +412,14 @@ namespace LED
             }
         }
 
-        private void CP5200_SendImg(string imgPath)
+        private void CP5200_SendImg(TextImage img)
         {
 
             InitComm();
             int nRet = 0;
             // Network
-            nRet = CP5200.CP5200_Net_SendPicture(Convert.ToByte(1), 0, 0, 0, 240, 32,
-                    Marshal.StringToHGlobalAnsi(imgPath), 1, 0, 3, 0);
+            nRet = CP5200.CP5200_Net_SendPicture(Convert.ToByte(1), 0, 0, 0, img.Width, img.Height,
+                    Marshal.StringToHGlobalAnsi(img.path), 1, 0, 3, 0);
 
             if (nRet >= 0)
             {

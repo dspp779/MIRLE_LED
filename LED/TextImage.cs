@@ -13,6 +13,7 @@ namespace LED
     public class TextImage
     {
         private static int counter = 0;
+        private static int counterlock = 0;
 
         private string _path;
         private Image _img;
@@ -22,12 +23,22 @@ namespace LED
             get { return _path; }
         }
 
+        public int Width
+        {
+            get { return _img.Width; }
+        }
+        
+        public int Height
+        {
+            get { return _img.Height; }
+        }
+
         public TextImage(String text, Font font, Color textColor, Color backColor)
         {
             _path = getTempPath();
             _img = DrawText(text, font, textColor, backColor);
-            _img.Save(_path, ImageFormat.Jpeg);
-            File.SetAttributes(_path, FileAttributes.Hidden);
+            _img.Save(_path, ImageFormat.Png);
+            //File.SetAttributes(_path, FileAttributes.Hidden);
         }
 
         public void release()
@@ -38,22 +49,29 @@ namespace LED
 
         private static string getTempPath()
         {
-            while (true)
+            try
             {
-                //0 indicates that the method is not in use. 
-                if (0 == Interlocked.Exchange(ref counter, 1))
+                while (true)
                 {
-                    String filePath = string.Format("~tempimg{0}.jpg", counter++);
-                    //Release the lock
-                    Interlocked.Exchange(ref counter, 0);
-                    if (!File.Exists(filePath))
-                        return filePath;
-                }
-                else
-                {
-                    SpinWait.SpinUntil(() => false, 200);
-                }
+                    //0 indicates that the method is not in use. 
+                    if (0 == Interlocked.Exchange(ref counterlock, 1))
+                    {
+                        String filePath = string.Format("./~tempimg{0}.png", counter++);
+                        //Release the lock
+                        Interlocked.Exchange(ref counterlock, 0);
+                        if (!File.Exists(filePath))
+                            return filePath;
+                    }
+                    else
+                    {
+                        SpinWait.SpinUntil(() => false, 200);
+                    }
 
+                }
+            }
+            catch(Exception)
+            {
+                return null;
             }
         }
 
