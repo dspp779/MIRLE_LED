@@ -9,7 +9,7 @@ namespace CPower_CSharp
 {
     public class CP5200
     {
-        private const string m_strPath = "CP5200.dll";
+        private const string m_strPath = @"CP5200\CP5200.dll";
 
 		//playbill
 		[DllImport(m_strPath, CharSet = CharSet.Auto)]

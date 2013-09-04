@@ -615,7 +615,7 @@ namespace CPower_CSharp
             // Network
 	        if ( m_nCommType == 1)
 			{
-				nRet = CP5200.CP5200_Net_SendText(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtText.Text), 0xFF, 16, 3, 0, 3, 5);
+                nRet = CP5200.CP5200_Net_SendText(Convert.ToByte(m_cmbCardID.SelectedIndex + 1), m_cmbWndNo.SelectedIndex, Marshal.StringToHGlobalAnsi(m_txtText.Text), 0xFF, 16, 3, 0, 3, 5);
             }
             // RS232/485
 			else

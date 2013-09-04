@@ -12,6 +12,8 @@ using System.Threading;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using GeFanuc.iFixToolkit.Adapter;
+using CPower_CSharp;
+using System.Runtime.InteropServices;
 
 namespace LED
 {
@@ -24,6 +26,9 @@ namespace LED
 
         private bool refreshSignal = false;
         private object signalLock = new object();
+
+        // CP5200 LED controller related variable
+        private int m_nTimeout = 600;
 
         public SettingForm()
         {
@@ -38,7 +43,7 @@ namespace LED
                 Screen_IP.Text = iniFile.IniReadValue("SCREEN", "IP");
                 // load alarm setting
                 // load im
-                loadIMSetting();
+                loadIMList();
                 // init data grid view
                 initDataGrid();
                 toolStripStatusLabel.Text = "設定載入完成";
@@ -75,7 +80,8 @@ namespace LED
             }
         }
 
-        private void loadIMSetting()
+        #region -- settings --
+        private void loadIMList()
         {
             // load bin to list
             if (!File.Exists(binPath))
@@ -91,9 +97,8 @@ namespace LED
                 }
             }
         }
-
         // save list to file as binary
-        private void saveIMSetting()
+        private void saveIMList()
         {
             using (Stream stream = File.Open(binPath, FileMode.Create))
             {
@@ -120,9 +125,12 @@ namespace LED
             iniFile.IniWriteValue("SCREEN", "IP", Screen_IP.Text);
             Invoke(new UIHandler(RefreshStatus), new Object[] { "ini設定檔保存完成" });
         }
+        #endregion
 
+        // data refresh worker
         private void RefreshPreviewWorker(object o)
         {
+            int i = 0;
             IMSetting ims = new IMSetting();
             while (true)
             {
@@ -138,12 +146,12 @@ namespace LED
 
                         if (nErr != FixError.FE_OK)
                         {
-                            Invoke(new UIHandler(RefreshPreview), new Object[] { "????" });
+                            RefreshPreview("????" + i);
                         }
                         else
                         {
                             str = string.Format("{0:" + ims.format.Replace('x', '0') + "}", float.Parse(str));
-                            Invoke(new UIHandler(RefreshPreview), new Object[] { str });
+                            RefreshPreview(str + i);
                         }
                         refreshSignal = false;
                     }
@@ -158,7 +166,7 @@ namespace LED
                     {
                         try
                         {
-                            Invoke(new UIHandler(RefreshPreview), new Object[] { "????" });
+                            RefreshPreview("????" + i);
                         }
                         catch (ObjectDisposedException)
                         {
@@ -167,18 +175,24 @@ namespace LED
                 }
                 finally
                 {
+                    i++;
                     SpinWait.SpinUntil(() => refreshSignal, 1000);
                 }
             }
         }
 
-        delegate void UIHandler(string str);
+        #region -- UI --
         private void RefreshPreview(string str)
         {
-            PreviewResult.Text = presentIM.priorString + str + presentIM.unit;
+            Invoke(new UIHandler(DoRefreshPreview), new Object[] { presentIM.priorString + str + presentIM.unit });
+            CP5200_SendText(PreviewResult.Text);
+        }
+        delegate void UIHandler(string str);
+        private void DoRefreshPreview(string str)
+        {
+            PreviewResult.Text = str;
             PreviewResult.ForeColor = Color.FromArgb(presentIM.color);
         }
-
         private void RefreshStatus(string str)
         {
             toolStripStatusLabel.Text = str;
@@ -199,7 +213,7 @@ namespace LED
             {
                 inputIM();
                 // save modification
-                saveIMSetting();
+                saveIMList();
             }
             catch (ArgumentException ex)
             {
@@ -234,14 +248,12 @@ namespace LED
                     presentIM.format, presentIM.unit, presentIM.color);
             }
         }
-
         private void addIM(string str, string tag, string format, string unit, int color)
         {
             IMSetting ims = new IMSetting(str, tag, format, unit, color);
             IMList.Add(ims);
             addRow(str, tag, format, unit, Color.FromArgb(color));
         }
-
         private void setIM(int index, string str, string tag, string format, string unit, int color)
         {
             IMList[index].set(presentIM);
@@ -256,7 +268,6 @@ namespace LED
             // set dataGridView row value
             setRow(dataGridView_IM.Rows.Count - 1, str, tag, format, unit, color);
         }
-
         private void setRow(int index, string str, string tag, string format, string unit, Color color)
         {
             // set dataGridView row value
@@ -301,6 +312,26 @@ namespace LED
             }
         }
         
+
+        private void im_colorButton_Click(object sender, EventArgs e)
+        {
+            if (im_colorDialog.ShowDialog() == DialogResult.OK)
+            {
+                im_colorButton.ForeColor = im_colorDialog.Color;
+            }
+        }
+        private void im_colorButton_ForeColorChanged(object sender, EventArgs e)
+        {
+            Color c = im_colorButton.ForeColor;
+            int luma = (int)(c.R * 0.3 + c.G * 0.59 + c.B * 0.11);
+            im_colorButton.BackColor = luma < 128 ? Color.White : Color.Black;
+        }
+
+        private void dataGridView_IM_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+            IMList.RemoveAt(e.RowIndex);
+            saveIMList();
+        }
         private void dataGridView_IM_SelectionChanged(object sender, EventArgs e)
         {
             inputButton.Text = "Set";
@@ -316,27 +347,6 @@ namespace LED
             }
         }
 
-        private void im_colorButton_Click(object sender, EventArgs e)
-        {
-            if (im_colorDialog.ShowDialog() == DialogResult.OK)
-            {
-                im_colorButton.ForeColor = im_colorDialog.Color;
-            }
-        }
-
-        private void im_colorButton_ForeColorChanged(object sender, EventArgs e)
-        {
-            Color c = im_colorButton.ForeColor;
-            int luma = (int)(c.R * 0.3 + c.G * 0.59 + c.B * 0.11);
-            im_colorButton.BackColor = luma < 128 ? Color.White : Color.Black;
-        }
-
-        private void dataGridView_IM_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
-        {
-            IMList.RemoveAt(e.RowIndex);
-            saveIMSetting();
-        }
-
         private void button_save_Click(object sender, EventArgs e)
         {
             try
@@ -348,5 +358,46 @@ namespace LED
                 MessageBox.Show(ex.Message);
             }
         }
+        #endregion
+
+        #region -- CP5200 --
+        private uint GetIP(string strIp)
+        {
+            System.Net.IPAddress ipaddress = System.Net.IPAddress.Parse(strIp);
+            uint lIp = BitConverter.ToUInt32(ipaddress.GetAddressBytes(), 0);
+            //調整IP字節序
+            lIp = ((lIp & 0xFF000000) >> 24) + ((lIp & 0x00FF0000) >> 8) + ((lIp & 0x0000FF00) << 8) + ((lIp & 0x000000FF) << 24);
+            return (lIp);
+        }
+
+        private void InitComm()
+        {
+                uint dwIPAddr = GetIP("192.168.1.222");
+                uint dwIDCode = GetIP("255.255.255.255");
+                int nIPPort = 5200;
+                if (dwIPAddr != 0 && dwIDCode != 0)
+                {
+                    CP5200.CP5200_Net_Init(dwIPAddr, nIPPort, dwIDCode, m_nTimeout);
+                }
+        }
+
+        private void CP5200_SendText(string str)
+        {
+
+            InitComm();
+            int nRet;
+            // Network
+            nRet = CP5200.CP5200_Net_SendText(Convert.ToByte(1), 0, Marshal.StringToHGlobalAnsi(str), 0xFF, 16, 3, 0, 3, 5);
+            
+            if (nRet >= 0)
+            {
+                Invoke(new UIHandler(RefreshStatus), new Object[] { "Success" });
+            }
+            else
+            {
+                Invoke(new UIHandler(RefreshStatus), new Object[] { "Fail" });
+            }
+        }
+        #endregion
     }
 }
