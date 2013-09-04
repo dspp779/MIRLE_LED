@@ -185,7 +185,10 @@ namespace LED
         private void RefreshPreview(string str)
         {
             Invoke(new UIHandler(DoRefreshPreview), new Object[] { presentIM.priorString + str + presentIM.unit });
-            CP5200_SendText(PreviewResult.Text);
+            //CP5200_SendText(PreviewResult.Text);
+            TextImage tempImg = new TextImage(str, Font, Color.FromArgb(presentIM.color), Color.Black);
+            CP5200_SendImg(tempImg.path);
+            tempImg.release();
         }
         delegate void UIHandler(string str);
         private void DoRefreshPreview(string str)
@@ -389,6 +392,25 @@ namespace LED
             // Network
             nRet = CP5200.CP5200_Net_SendText(Convert.ToByte(1), 0, Marshal.StringToHGlobalAnsi(str), 0xFF, 16, 3, 0, 3, 5);
             
+            if (nRet >= 0)
+            {
+                Invoke(new UIHandler(RefreshStatus), new Object[] { "Success" });
+            }
+            else
+            {
+                Invoke(new UIHandler(RefreshStatus), new Object[] { "Fail" });
+            }
+        }
+
+        private void CP5200_SendImg(string imgPath)
+        {
+
+            InitComm();
+            int nRet = 0;
+            // Network
+            nRet = CP5200.CP5200_Net_SendPicture(Convert.ToByte(1), 0, 0, 0, 240, 32,
+                    Marshal.StringToHGlobalAnsi(imgPath), 1, 0, 3, 0);
+
             if (nRet >= 0)
             {
                 Invoke(new UIHandler(RefreshStatus), new Object[] { "Success" });

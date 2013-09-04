@@ -300,7 +300,7 @@ namespace CPower_CSharp
             this.m_txtWidth.Name = "m_txtWidth";
             this.m_txtWidth.Size = new System.Drawing.Size(40, 22);
             this.m_txtWidth.TabIndex = 3;
-            this.m_txtWidth.Text = "320";
+            this.m_txtWidth.Text = "240";
             // 
             // label8
             // 
