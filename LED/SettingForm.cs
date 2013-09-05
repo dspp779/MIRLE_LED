@@ -19,21 +19,12 @@ namespace LED
 {
     public partial class SettingForm : Form
     {
-        // file path for ini setting
-        private readonly static IniFile iniFile = new IniFile(Application.StartupPath + @"\setting.ini");
-        // file path for instant message list
-        private readonly static string binPath = Application.StartupPath + @"\setting.bin";
-
-
         private List<IMSetting> IMList;
         private InstantMessage presentIM = new InstantMessage();
 
         private bool refreshSignal = false;
         private object signalLock = new object();
-
-        // CP5200 LED controller related variable
-        private int m_nTimeout = 600;
-
+        
         #region -- initialization --
 
         public SettingForm()
@@ -45,33 +36,40 @@ namespace LED
         {
             try
             {
-                // load screen setting
-                Screen_IP.Text = iniFile.IniReadValue("SCREEN", "IP");
+                // load net setting
+                loadConfig();
                 // load alarm setting
                 // load im
-                loadIMList();
+                IMList = LEDConfig.loadIMList();
                 // init data grid view
                 initDataGrid();
                 toolStripStatusLabel.Text = "設定載入完成";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                toolStripStatusLabel.Text = "設定載入失敗";
+                toolStripStatusLabel.Text = "設定載入失敗:" + ex.Message;
             }
 
             dataGridView_IM.ClearSelection();
 
+            label_help.Text = "";
+
             // add event handler
             dataGridView_IM.SelectionChanged += new EventHandler(dataGridView_IM_SelectionChanged);
-            // input data change handler
-            im_string.TextChanged += new EventHandler(InputData_Change);
-            im_tag.TextChanged += new EventHandler(InputData_Change);
-            im_format.SelectedIndexChanged += new EventHandler(InputData_Change);
-            im_unit.TextChanged += new EventHandler(InputData_Change);
-            im_colorButton.ForeColorChanged += new EventHandler(InputData_Change);
 
             // start eda data refresh worker
-            ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshPreviewWorker));
+            ThreadPool.QueueUserWorkItem(new WaitCallback(MessageRefresher));
+        }
+
+        private void loadConfig()
+        {
+            LEDConfig.loadConfig();
+            textBox_IP.Text = LEDConfig.IpAddr;
+            textBox_port.Text = LEDConfig.port.ToString();
+            textBox_idcode.Text = LEDConfig.IDCode;
+            textBox_timeout.Text = LEDConfig.timeout.ToString();
+            // init CP5200 connection
+            LEDConnection.InitComm();
         }
 
         private void initDataGrid()
@@ -88,85 +86,15 @@ namespace LED
 
         #endregion
 
-        #region -- settings --
-        private void loadIMList()
-        {
-            // load bin to list
-            if (!File.Exists(binPath))
-            {
-                IMList = new List<IMSetting>();
-            }
-            else
-            {
-                using (Stream stream = File.Open(binPath, FileMode.Open))
-                {
-                    BinaryFormatter bin = new BinaryFormatter();
-                    IMList = (List<IMSetting>)bin.Deserialize(stream);
-                }
-            }
-        }
-        // save list to file as binary
-        private void saveIMList()
-        {
-            using (Stream stream = File.Open(binPath, FileMode.Create))
-            {
-                BinaryFormatter bin = new BinaryFormatter();
-                bin.Serialize(stream, IMList);
-            }
-        }
-
-        private void saveIni()
-        {
-            String[] ipFrag = Screen_IP.Text.Split('.');
-            if (ipFrag.Length != 4)
-            {
-                throw new FormatException("Invalid IPv4 Address\n(x.x.x.x)");
-            }
-            foreach (string str in ipFrag)
-            {
-                int i;
-                if (!int.TryParse(str, out i) || i < 0 || i > 255)
-                {
-                    throw new FormatException("Invalid IPv4 Address\nx.x.x.x(x:0~255)");
-                }
-            }
-            iniFile.IniWriteValue("SCREEN", "IP", Screen_IP.Text);
-            Invoke(new UIHandler(RefreshStatus), new Object[] { "ini設定檔保存完成" });
-        }
-        #endregion
-
         // data refresh worker
-        private void RefreshPreviewWorker(object o)
+        private void MessageRefresher(object o)
         {
-            IMSetting ims = new IMSetting();
             while (true)
             {
                 try
                 {
-                    lock (signalLock)
-                    {
-                        ims.set(presentIM);
-
-                        refreshSignal = false;
-
-                        float f;
-                        short nErr = Eda.GetOneFloat(ims.node, ims.tag, ims.field, out f);
-
-                        if (nErr != FixError.FE_OK)
-                        {
-                            RefreshMessage("????");
-                        }
-                        else
-                        {
-                            string str = string.Format("{0:" + ims.format.Replace('x', '0') + "}", f);
-                            RefreshMessage(presentIM.priorString + str + presentIM.unit);
-                        }
-                    }
-                }
-                catch (DllNotFoundException)
-                {
-                    RefreshMessage("????");
-                    RefreshStatus("請確認是否開啟ifix");
+                    // start eda data refresh worker
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshMessageWorker));
                 }
                 catch (Exception ex)
                 {
@@ -192,27 +120,72 @@ namespace LED
             }
         }
 
-        #region -- UI delegate --
+        private void RefreshMessageWorker(object o)
+        {
+            try
+            {
+                IMSetting ims = new IMSetting();
+                ims.set(presentIM);
+                refreshSignal = false;
+                float f;
+                short nErr = Eda.GetOneFloat(ims.node, ims.tag, ims.field, out f);
+                if (nErr != FixError.FE_OK)
+                {
+                    RefreshMessage("????");
+                }
+                else
+                {
+                    int i = ims.format.IndexOf('.');
+                    string format = i < 0 ? "" : ims.format.Substring(i).Replace('#', '0');
+                    RefreshMessage(string.Format("{0} {1:" + format + "} {2}", presentIM.priorString, f, presentIM.unit));
+                }
+            }
+            catch (DllNotFoundException)
+            {
+                RefreshMessage("ifix連接失敗");
+                RefreshStatus("請確認是否開啟ifix");
+            }
+            catch (FormatException ex)
+            {
+                RefreshMessage("格式錯誤" + ex.Message);
+            }
 
-        delegate void UIHandler(string str);
+        }
+
         private void RefreshMessage(string str)
         {
             if (Disposing || IsDisposed)
             {
                 return;
             }
-            //refresh preview area
-            Invoke(new UIHandler(RefreshPreview), new Object[] { str });
 
             //CP5200_SendText(PreviewResult.Text);
 
             // create temporal image
-            TextImage tempImg = new TextImage(str, Font, Color.FromArgb(presentIM.color), Color.Black);
-            // send temporal image
-            CP5200_SendImg(tempImg);
-            // delete temporal image
-            tempImg.release();
+            TextImage tempImg = new TextImage(str, LEDConfig.defaultFont, Color.FromArgb(presentIM.color), Color.Black);
+
+            try
+            {
+                // send temporal image
+                LEDConnection.CP5200_SendImg(tempImg);
+                //refresh preview area
+                Invoke(new UIHandler(RefreshPreview), new Object[] { str });
+            }
+            catch (Exception ex)
+            {
+                //refresh preview area
+                Invoke(new UIHandler(RefreshPreview), new Object[] { ex.Message });
+            }
+            finally
+            {
+                // delete temporal image
+                tempImg.release();
+            }
         }
+
+        #region -- UI delegate --
+
+        delegate void UIHandler(string str);
         private void RefreshPreview(string str)
         {
             PreviewResult.Text = str;
@@ -320,20 +293,7 @@ namespace LED
 
         #region -- event handler --
 
-        // input data change handler
-        private void InputData_Change(object sender, EventArgs e)
-        {
-            presentIM.set(im_string.Text, im_tag.Text, im_format.Text, im_unit.Text, im_colorButton.ForeColor.ToArgb());
-            if (!refreshSignal)
-            {
-                lock (signalLock)
-                {
-                    refreshSignal = true;
-                }
-            }
-        }
-        
-        // color event handler
+        // color button event handler
         private void im_colorButton_Click(object sender, EventArgs e)
         {
             if (im_colorDialog.ShowDialog() == DialogResult.OK)
@@ -343,6 +303,7 @@ namespace LED
         }
         private void im_colorButton_ForeColorChanged(object sender, EventArgs e)
         {
+            presentIM.color = im_colorButton.ForeColor.ToArgb();
             Color c = im_colorButton.ForeColor;
             int luma = (int)(c.R * 0.3 + c.G * 0.59 + c.B * 0.11);
             im_colorButton.BackColor = luma < 128 ? Color.White : Color.Black;
@@ -352,7 +313,7 @@ namespace LED
         private void dataGridView_IM_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
         {
             IMList.RemoveAt(e.RowIndex);
-            saveIMList();
+            LEDConfig.saveIMList(IMList);
         }
         private void dataGridView_IM_SelectionChanged(object sender, EventArgs e)
         {
@@ -361,24 +322,47 @@ namespace LED
             int index = dataGridView_IM.CurrentRow.Index;
             lock (signalLock)
             {
+                im_string.Text = IMList[index].priorString;
                 im_format.Text = IMList[index].format;
                 im_tag.Text = IMList[index].source;
-                im_string.Text = IMList[index].priorString;
                 im_unit.Text = IMList[index].unit;
                 im_colorButton.ForeColor = Color.FromArgb(IMList[index].color);
+                refreshSignal = true;
             }
         }
 
+        private void textBox_IpPress(object sender, KeyPressEventArgs e)
+        {
+            // ip allow digit and dot
+            e.Handled = !(digitTextBoxTest(e.KeyChar) || e.KeyChar == '.');
+        }
+        private void textBox_DigitPress(object sender, KeyPressEventArgs e)
+        {
+            // set false if KeyChar is digit or control char; otherwise, true.
+            e.Handled = !digitTextBoxTest(e.KeyChar);
+        }
+        private static bool digitTextBoxTest(char c)
+        {
+            return Char.IsDigit(c) || Char.IsControl(c);
+        }
 
         private void button_save_Click(object sender, EventArgs e)
         {
             try
             {
-                saveIni();
+                LEDConfig.IpAddr = textBox_IP.Text;
+                LEDConfig.port = int.Parse(textBox_port.Text);
+                LEDConfig.IDCode = textBox_idcode.Text;
+                LEDConfig.timeout = int.Parse(textBox_timeout.Text);
             }
             catch (FormatException ex)
             {
                 MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                // refresh textBox
+                loadConfig();
             }
         }
         private void inputButton_Click(object sender, EventArgs e)
@@ -387,7 +371,7 @@ namespace LED
             {
                 inputIM();
                 // save modification
-                saveIMList();
+                LEDConfig.saveIMList(IMList);
             }
             catch (ArgumentException ex)
             {
@@ -402,63 +386,30 @@ namespace LED
 
         #endregion
 
-        #region -- CP5200 --
-        private uint GetIP(string strIp)
-        {
-            System.Net.IPAddress ipaddress = System.Net.IPAddress.Parse(strIp);
-            uint lIp = BitConverter.ToUInt32(ipaddress.GetAddressBytes(), 0);
-            //調整IP字節序
-            lIp = ((lIp & 0xFF000000) >> 24) + ((lIp & 0x00FF0000) >> 8) + ((lIp & 0x0000FF00) << 8) + ((lIp & 0x000000FF) << 24);
-            return (lIp);
-        }
-
-        private void InitComm()
-        {
-                uint dwIPAddr = GetIP("192.168.1.222");
-                uint dwIDCode = GetIP("255.255.255.255");
-                int nIPPort = 5200;
-                if (dwIPAddr != 0 && dwIDCode != 0)
-                {
-                    CP52000.CP5200_Net_Init(dwIPAddr, nIPPort, dwIDCode, m_nTimeout);
-                }
-        }
-
-        private void CP5200_SendText(string str)
+        private void button_ping_Click(object sender, EventArgs e)
         {
 
-            InitComm();
-            int nRet;
-            // Network
-            nRet = CP52000.CP5200_Net_SendText(Convert.ToByte(1), 0, Marshal.StringToHGlobalAnsi(str), 0xFF, 16, 3, 0, 3, 5);
-
-            if (nRet >= 0)
-            {
-                RefreshStatus("Send Message to CP5200 Success");
-            }
-            else
-            {
-                RefreshStatus("Send Message to CP5200 Fail");
-            }
         }
 
-        private void CP5200_SendImg(TextImage img)
+        private void im_string_TextChanged(object sender, EventArgs e)
         {
-
-            InitComm();
-            int nRet = 0;
-            // Network
-            nRet = CP52000.CP5200_Net_SendPicture(Convert.ToByte(1), 0, 0, 0, img.Width, img.Height,
-                    Marshal.StringToHGlobalAnsi(img.path), 1, 0, 3, 0);
-
-            if (nRet >= 0)
-            {
-                RefreshStatus("Send Message to CP5200 Success");
-            }
-            else
-            {
-                RefreshStatus("Send Message to CP5200 Fail");
-            }
+            presentIM.priorString = im_string.Text;
         }
-        #endregion
+
+        private void im_tag_TextChanged(object sender, EventArgs e)
+        {
+            presentIM.source = im_tag.Text;
+        }
+
+        private void im_format_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            presentIM.format = im_format.Text;
+        }
+
+        private void im_unit_TextChanged(object sender, EventArgs e)
+        {
+            presentIM.unit = im_unit.Text;
+        }
+
     }
 }

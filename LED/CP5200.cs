@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace CPower_CSharp
 {
-    public class CP52000
+    public class CP5200
     {
         private const string m_strPath = @"CP5200.dll";
 

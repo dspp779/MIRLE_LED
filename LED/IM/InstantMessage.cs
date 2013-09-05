@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace LED
 {
     [Serializable]
-    class InstantMessage
+    public class InstantMessage
     {
         public virtual string priorString
         {

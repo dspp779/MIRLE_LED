@@ -30,9 +30,18 @@
         {
             this.Setting = new System.Windows.Forms.TabControl();
             this.LEDScreenSetting = new System.Windows.Forms.TabPage();
+            this.groupBox_net = new System.Windows.Forms.GroupBox();
+            this.label_help = new System.Windows.Forms.Label();
+            this.button_ping = new System.Windows.Forms.Button();
+            this.textBox_IP = new System.Windows.Forms.TextBox();
             this.button_save = new System.Windows.Forms.Button();
-            this.label_screenIP = new System.Windows.Forms.Label();
-            this.Screen_IP = new System.Windows.Forms.TextBox();
+            this.label_timeout = new System.Windows.Forms.Label();
+            this.label_IP = new System.Windows.Forms.Label();
+            this.textBox_timeout = new System.Windows.Forms.TextBox();
+            this.label_idcode = new System.Windows.Forms.Label();
+            this.textBox_port = new System.Windows.Forms.TextBox();
+            this.textBox_idcode = new System.Windows.Forms.TextBox();
+            this.label_port = new System.Windows.Forms.Label();
             this.AlarmSetting = new System.Windows.Forms.TabPage();
             this.IMSetting = new System.Windows.Forms.TabPage();
             this.inputButton = new System.Windows.Forms.Button();
@@ -58,6 +67,7 @@
             this.EDABackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.Setting.SuspendLayout();
             this.LEDScreenSetting.SuspendLayout();
+            this.groupBox_net.SuspendLayout();
             this.IMSetting.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_IM)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -76,9 +86,7 @@
             // 
             // LEDScreenSetting
             // 
-            this.LEDScreenSetting.Controls.Add(this.button_save);
-            this.LEDScreenSetting.Controls.Add(this.label_screenIP);
-            this.LEDScreenSetting.Controls.Add(this.Screen_IP);
+            this.LEDScreenSetting.Controls.Add(this.groupBox_net);
             this.LEDScreenSetting.Location = new System.Drawing.Point(4, 22);
             this.LEDScreenSetting.Name = "LEDScreenSetting";
             this.LEDScreenSetting.Padding = new System.Windows.Forms.Padding(3);
@@ -87,9 +95,58 @@
             this.LEDScreenSetting.Text = "字幕機設定";
             this.LEDScreenSetting.UseVisualStyleBackColor = true;
             // 
+            // groupBox_net
+            // 
+            this.groupBox_net.Controls.Add(this.label_help);
+            this.groupBox_net.Controls.Add(this.button_ping);
+            this.groupBox_net.Controls.Add(this.textBox_IP);
+            this.groupBox_net.Controls.Add(this.button_save);
+            this.groupBox_net.Controls.Add(this.label_timeout);
+            this.groupBox_net.Controls.Add(this.label_IP);
+            this.groupBox_net.Controls.Add(this.textBox_timeout);
+            this.groupBox_net.Controls.Add(this.label_idcode);
+            this.groupBox_net.Controls.Add(this.textBox_port);
+            this.groupBox_net.Controls.Add(this.textBox_idcode);
+            this.groupBox_net.Controls.Add(this.label_port);
+            this.groupBox_net.Location = new System.Drawing.Point(6, 6);
+            this.groupBox_net.Name = "groupBox_net";
+            this.groupBox_net.Size = new System.Drawing.Size(417, 91);
+            this.groupBox_net.TabIndex = 14;
+            this.groupBox_net.TabStop = false;
+            this.groupBox_net.Text = "網路設定";
+            // 
+            // label_help
+            // 
+            this.label_help.AutoSize = true;
+            this.label_help.ForeColor = System.Drawing.Color.Red;
+            this.label_help.Location = new System.Drawing.Point(13, 70);
+            this.label_help.Name = "label_help";
+            this.label_help.Size = new System.Drawing.Size(53, 12);
+            this.label_help.TabIndex = 15;
+            this.label_help.Text = "label_help";
+            // 
+            // button_ping
+            // 
+            this.button_ping.Location = new System.Drawing.Point(214, 59);
+            this.button_ping.Name = "button_ping";
+            this.button_ping.Size = new System.Drawing.Size(75, 23);
+            this.button_ping.TabIndex = 14;
+            this.button_ping.Text = "Ping";
+            this.button_ping.UseVisualStyleBackColor = true;
+            this.button_ping.Click += new System.EventHandler(this.button_ping_Click);
+            // 
+            // textBox_IP
+            // 
+            this.textBox_IP.Location = new System.Drawing.Point(15, 31);
+            this.textBox_IP.MaxLength = 15;
+            this.textBox_IP.Name = "textBox_IP";
+            this.textBox_IP.Size = new System.Drawing.Size(100, 22);
+            this.textBox_IP.TabIndex = 5;
+            this.textBox_IP.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_IpPress);
+            // 
             // button_save
             // 
-            this.button_save.Location = new System.Drawing.Point(26, 114);
+            this.button_save.Location = new System.Drawing.Point(336, 59);
             this.button_save.Name = "button_save";
             this.button_save.Size = new System.Drawing.Size(75, 23);
             this.button_save.TabIndex = 7;
@@ -97,21 +154,68 @@
             this.button_save.UseVisualStyleBackColor = true;
             this.button_save.Click += new System.EventHandler(this.button_save_Click);
             // 
-            // label_screenIP
+            // label_timeout
             // 
-            this.label_screenIP.AutoSize = true;
-            this.label_screenIP.Location = new System.Drawing.Point(24, 29);
-            this.label_screenIP.Name = "label_screenIP";
-            this.label_screenIP.Size = new System.Drawing.Size(15, 12);
-            this.label_screenIP.TabIndex = 6;
-            this.label_screenIP.Text = "IP";
+            this.label_timeout.AutoSize = true;
+            this.label_timeout.Location = new System.Drawing.Point(309, 16);
+            this.label_timeout.Name = "label_timeout";
+            this.label_timeout.Size = new System.Drawing.Size(40, 12);
+            this.label_timeout.TabIndex = 13;
+            this.label_timeout.Text = "timeout";
             // 
-            // Screen_IP
+            // label_IP
             // 
-            this.Screen_IP.Location = new System.Drawing.Point(24, 44);
-            this.Screen_IP.Name = "Screen_IP";
-            this.Screen_IP.Size = new System.Drawing.Size(100, 22);
-            this.Screen_IP.TabIndex = 5;
+            this.label_IP.AutoSize = true;
+            this.label_IP.Location = new System.Drawing.Point(15, 16);
+            this.label_IP.Name = "label_IP";
+            this.label_IP.Size = new System.Drawing.Size(15, 12);
+            this.label_IP.TabIndex = 6;
+            this.label_IP.Text = "IP";
+            // 
+            // textBox_timeout
+            // 
+            this.textBox_timeout.Location = new System.Drawing.Point(309, 31);
+            this.textBox_timeout.Name = "textBox_timeout";
+            this.textBox_timeout.Size = new System.Drawing.Size(100, 22);
+            this.textBox_timeout.TabIndex = 12;
+            this.textBox_timeout.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_DigitPress);
+            // 
+            // label_idcode
+            // 
+            this.label_idcode.AutoSize = true;
+            this.label_idcode.Location = new System.Drawing.Point(185, 16);
+            this.label_idcode.Name = "label_idcode";
+            this.label_idcode.Size = new System.Drawing.Size(42, 12);
+            this.label_idcode.TabIndex = 11;
+            this.label_idcode.Text = "IDCode";
+            // 
+            // textBox_port
+            // 
+            this.textBox_port.Location = new System.Drawing.Point(132, 31);
+            this.textBox_port.MaxLength = 5;
+            this.textBox_port.Name = "textBox_port";
+            this.textBox_port.ShortcutsEnabled = false;
+            this.textBox_port.Size = new System.Drawing.Size(39, 22);
+            this.textBox_port.TabIndex = 8;
+            this.textBox_port.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_DigitPress);
+            // 
+            // textBox_idcode
+            // 
+            this.textBox_idcode.Location = new System.Drawing.Point(187, 31);
+            this.textBox_idcode.MaxLength = 15;
+            this.textBox_idcode.Name = "textBox_idcode";
+            this.textBox_idcode.Size = new System.Drawing.Size(100, 22);
+            this.textBox_idcode.TabIndex = 10;
+            this.textBox_idcode.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_IpPress);
+            // 
+            // label_port
+            // 
+            this.label_port.AutoSize = true;
+            this.label_port.Location = new System.Drawing.Point(132, 16);
+            this.label_port.Name = "label_port";
+            this.label_port.Size = new System.Drawing.Size(24, 12);
+            this.label_port.TabIndex = 9;
+            this.label_port.Text = "Port";
             // 
             // AlarmSetting
             // 
@@ -243,6 +347,7 @@
             this.im_unit.Name = "im_unit";
             this.im_unit.Size = new System.Drawing.Size(100, 22);
             this.im_unit.TabIndex = 9;
+            this.im_unit.TextChanged += new System.EventHandler(this.im_unit_TextChanged);
             // 
             // label_unit
             // 
@@ -267,14 +372,15 @@
             this.im_format.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.im_format.FormattingEnabled = true;
             this.im_format.Items.AddRange(new object[] {
-            "xxxx",
-            "xxx.x",
-            "xx.xx",
-            "x.xxx"});
+            "####",
+            "###.#",
+            "##.##",
+            "#.###"});
             this.im_format.Location = new System.Drawing.Point(346, 45);
             this.im_format.Name = "im_format";
             this.im_format.Size = new System.Drawing.Size(121, 20);
             this.im_format.TabIndex = 5;
+            this.im_format.SelectedIndexChanged += new System.EventHandler(this.im_format_SelectedIndexChanged);
             // 
             // label_tag
             // 
@@ -291,6 +397,7 @@
             this.im_tag.Name = "im_tag";
             this.im_tag.Size = new System.Drawing.Size(100, 22);
             this.im_tag.TabIndex = 3;
+            this.im_tag.TextChanged += new System.EventHandler(this.im_tag_TextChanged);
             // 
             // label_string
             // 
@@ -308,6 +415,7 @@
             this.im_string.Name = "im_string";
             this.im_string.Size = new System.Drawing.Size(188, 22);
             this.im_string.TabIndex = 1;
+            this.im_string.TextChanged += new System.EventHandler(this.im_string_TextChanged);
             // 
             // im_colorDialog
             // 
@@ -340,7 +448,8 @@
             this.Load += new System.EventHandler(this.SettingForm_Load);
             this.Setting.ResumeLayout(false);
             this.LEDScreenSetting.ResumeLayout(false);
-            this.LEDScreenSetting.PerformLayout();
+            this.groupBox_net.ResumeLayout(false);
+            this.groupBox_net.PerformLayout();
             this.IMSetting.ResumeLayout(false);
             this.IMSetting.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView_IM)).EndInit();
@@ -369,8 +478,8 @@
         private System.Windows.Forms.Button im_colorButton;
         private System.Windows.Forms.TextBox PreviewResult;
         private System.Windows.Forms.DataGridView dataGridView_IM;
-        private System.Windows.Forms.Label label_screenIP;
-        private System.Windows.Forms.TextBox Screen_IP;
+        private System.Windows.Forms.Label label_IP;
+        private System.Windows.Forms.TextBox textBox_IP;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel;
         private System.Windows.Forms.Button inputButton;
@@ -381,6 +490,15 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn IMData_color;
         private System.Windows.Forms.Button button_save;
         private System.ComponentModel.BackgroundWorker EDABackgroundWorker;
+        private System.Windows.Forms.Label label_idcode;
+        private System.Windows.Forms.TextBox textBox_idcode;
+        private System.Windows.Forms.Label label_port;
+        private System.Windows.Forms.TextBox textBox_port;
+        private System.Windows.Forms.Label label_timeout;
+        private System.Windows.Forms.TextBox textBox_timeout;
+        private System.Windows.Forms.GroupBox groupBox_net;
+        private System.Windows.Forms.Button button_ping;
+        private System.Windows.Forms.Label label_help;
 
     }
 }

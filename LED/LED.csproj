@@ -52,6 +52,8 @@
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="LEDConfig.cs" />
+    <Compile Include="LEDConnection.cs" />
     <Compile Include="SettingForm.cs">
       <SubType>Form</SubType>
     </Compile>

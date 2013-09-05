@@ -10,7 +10,7 @@ using System.Xml.Serialization;
 namespace LED
 {
     [Serializable]
-    class IMSetting : InstantMessage
+    public class IMSetting : InstantMessage
     {
         private string _priorString;
         private string _node;
@@ -28,7 +28,7 @@ namespace LED
             set {
                 if (!(value is string) || value.Length > 15 || value.Length == 0)
                 {
-                    throw new ArgumentException("長度超出範圍(1~15)");
+                    throw new FormatException("長度超出範圍(1~15)");
                 }
                 _priorString = value;
             }
@@ -44,7 +44,7 @@ namespace LED
             {
                 if (!(value is string))
                 {
-                    throw new ArgumentException();
+                    throw new FormatException();
                 }
                 else
                 {
@@ -58,7 +58,7 @@ namespace LED
                     }
                     else
                     {
-                        throw new ArgumentException("Tag格式錯誤\r\nex: FIX.AI01.A_CV");
+                        throw new FormatException("Tag格式錯誤\r\nex: FIX.AI01.A_CV");
                     }
                 }
             }
@@ -74,11 +74,11 @@ namespace LED
             {
                 if (!(value is string))
                 {
-                    throw new ArgumentException();
+                    throw new FormatException();
                 }
                 else
                 {
-                    Regex r = new Regex(@"^(x{1,4})(\.(x{1,3}))?$");
+                    Regex r = new Regex(@"^(#{1,4})(\.(#{1,3}))?$");
                     Match m = r.Match(value);
                     if (m.Success && m.Groups[1].Value.Length + m.Groups[3].Value.Length == 4)
                     {
@@ -86,7 +86,7 @@ namespace LED
                     }
                     else
                     {
-                        throw new ArgumentException("不合規定的format");
+                        throw new FormatException("不合規定的format");
                     }
                 }
             }
@@ -100,9 +100,9 @@ namespace LED
             }
             set
             {
-                if (!(value is string) || value.Length > 12 || value.Length == 0)
+                if (!(value is string) || value.Length > 12)
                 {
-                    throw new ArgumentException("單位字串超出範圍");
+                    throw new FormatException("單位字串超出範圍");
                 }
                 _unit = value;
             }
