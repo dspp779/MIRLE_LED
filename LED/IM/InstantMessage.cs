@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace LED
 {
+    /* InstantMessage is a simple class representing a message
+     * with only field name and its type.
+     * If you would like to take a look of format specification,
+     * you may look to class IMSetting
+     * */
     [Serializable]
     public class InstantMessage
     {

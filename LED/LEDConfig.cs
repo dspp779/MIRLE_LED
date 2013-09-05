@@ -24,7 +24,7 @@ namespace LED
         private static string _IDCode = "255.255.255.255";
         private static int _timeout = 600;
 
-        public readonly static Font defaultFont = new Font("新細明體", 12);
+        public readonly static Font defaultFont = new Font("細明體", 16, FontStyle.Regular, GraphicsUnit.Pixel);
 
         public static string IpAddr
         {

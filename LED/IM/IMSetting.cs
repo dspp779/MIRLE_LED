@@ -12,6 +12,10 @@ namespace LED
     [Serializable]
     public class IMSetting : InstantMessage
     {
+        /* IMSetting is an extenstion of InstantMessage
+         * with format verification and 
+         * 
+         * */
         private string _priorString;
         private string _node;
         private string _tag;
@@ -26,10 +30,10 @@ namespace LED
                 return _priorString;
             }
             set {
-                if (!(value is string) || value.Length > 15 || value.Length == 0)
+                /*if (!(value is string) || value.Length > 15 || value.Length == 0)
                 {
                     throw new FormatException("長度超出範圍(1~15)");
-                }
+                }*/
                 _priorString = value;
             }
         }
@@ -138,6 +142,13 @@ namespace LED
             {
                 return _field;
             }
+        }
+
+        public string getVal(float val)
+        {
+            int i = _format.IndexOf('.');
+            string format = i < 0 ? "" : _format.Substring(i).Replace('#', '0');
+            return string.Format("{0} {1:0" + format + "} {2}", priorString, val, unit);
         }
     }
 }

@@ -17,6 +17,7 @@
             {
                 components.Dispose();
             }
+            TextImage.releaseAll();
             base.Dispose(disposing);
         }
 
@@ -317,7 +318,7 @@
             this.PreviewResult.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.PreviewResult.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.PreviewResult.Cursor = System.Windows.Forms.Cursors.Default;
-            this.PreviewResult.Font = new System.Drawing.Font("新細明體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.PreviewResult.Font = new System.Drawing.Font("細明體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.PreviewResult.ForeColor = System.Drawing.SystemColors.Window;
             this.PreviewResult.Location = new System.Drawing.Point(22, 88);
             this.PreviewResult.MaxLength = 30;

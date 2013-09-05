@@ -19,12 +19,16 @@ namespace LED
 {
     public partial class SettingForm : Form
     {
+        // list of instant messages
         private List<IMSetting> IMList;
+        // current message derived from textBoxes
         private InstantMessage presentIM = new InstantMessage();
 
+        // signal represent if refreshment is needed or not
         private bool refreshSignal = false;
+        // synchronization lock for refreshsignal
         private object signalLock = new object();
-        
+                
         #region -- initialization --
 
         public SettingForm()
@@ -50,8 +54,8 @@ namespace LED
                 toolStripStatusLabel.Text = "設定載入失敗:" + ex.Message;
             }
 
+            // initialization
             dataGridView_IM.ClearSelection();
-
             label_help.Text = "";
 
             // add event handler
@@ -63,7 +67,9 @@ namespace LED
 
         private void loadConfig()
         {
+            // load config from ini file
             LEDConfig.loadConfig();
+            // fill config to textBoxes
             textBox_IP.Text = LEDConfig.IpAddr;
             textBox_port.Text = LEDConfig.port.ToString();
             textBox_idcode.Text = LEDConfig.IDCode;
@@ -74,9 +80,12 @@ namespace LED
 
         private void initDataGrid()
         {
+            // clear gridView
             dataGridView_IM.Rows.Clear();
+            // pre-create empty row
             dataGridView_IM.Rows.Add(IMList.Count);
 
+            // fill instant messages values
             int i = 0;
             foreach (IMSetting im in IMList)
             {
@@ -86,6 +95,8 @@ namespace LED
 
         #endregion
 
+        #region -- EDA message refresher --
+
         // data refresh worker
         private void MessageRefresher(object o)
         {
@@ -94,7 +105,8 @@ namespace LED
                 try
                 {
                     // start eda data refresh worker
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshMessageWorker));
+                    RefreshMessageWorker(null);
+                    //ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshMessageWorker));
                 }
                 catch (Exception ex)
                 {
@@ -124,9 +136,14 @@ namespace LED
         {
             try
             {
+                /* IMSetting is extention of InstanMessage
+                 * with the capability of field examination.
+                 * */
                 IMSetting ims = new IMSetting();
                 ims.set(presentIM);
+
                 refreshSignal = false;
+                // retrieve value from ifix EDA
                 float f;
                 short nErr = Eda.GetOneFloat(ims.node, ims.tag, ims.field, out f);
                 if (nErr != FixError.FE_OK)
@@ -135,9 +152,7 @@ namespace LED
                 }
                 else
                 {
-                    int i = ims.format.IndexOf('.');
-                    string format = i < 0 ? "" : ims.format.Substring(i).Replace('#', '0');
-                    RefreshMessage(string.Format("{0} {1:" + format + "} {2}", presentIM.priorString, f, presentIM.unit));
+                    RefreshMessage(ims.getVal(f));
                 }
             }
             catch (DllNotFoundException)
@@ -183,6 +198,8 @@ namespace LED
             }
         }
 
+        #endregion
+
         #region -- UI delegate --
 
         delegate void UIHandler(string str);
@@ -226,8 +243,10 @@ namespace LED
         }
         private void addIM(string str, string tag, string format, string unit, int color)
         {
+            // add im into list
             IMSetting ims = new IMSetting(str, tag, format, unit, color);
             IMList.Add(ims);
+            // add im information to datagridview
             addRow(str, tag, format, unit, Color.FromArgb(color));
         }
         private void setIM(int index, string str, string tag, string format, string unit, int color)
@@ -261,6 +280,7 @@ namespace LED
             int row = cell.RowIndex;
             int col = cell.ColumnIndex;
 
+            // set value to different column
             if (col == IMData_string.Index)
             {
                 cell.Value = presentIM.priorString;
@@ -301,6 +321,7 @@ namespace LED
                 im_colorButton.ForeColor = im_colorDialog.Color;
             }
         }
+        // color button change event
         private void im_colorButton_ForeColorChanged(object sender, EventArgs e)
         {
             presentIM.color = im_colorButton.ForeColor.ToArgb();
@@ -315,6 +336,7 @@ namespace LED
             IMList.RemoveAt(e.RowIndex);
             LEDConfig.saveIMList(IMList);
         }
+        // selection change reflect to textBoxes
         private void dataGridView_IM_SelectionChanged(object sender, EventArgs e)
         {
             inputButton.Text = "Set";
@@ -343,6 +365,7 @@ namespace LED
         }
         private static bool digitTextBoxTest(char c)
         {
+            // allow press of digit key or control key
             return Char.IsDigit(c) || Char.IsControl(c);
         }
 
@@ -384,32 +407,31 @@ namespace LED
             inputButton.Text = "Add";
         }
 
-        #endregion
-
         private void button_ping_Click(object sender, EventArgs e)
         {
-
+            // To do : test LED connection 
         }
 
+        #endregion
+
+        #region -- textBox change event --
         private void im_string_TextChanged(object sender, EventArgs e)
         {
             presentIM.priorString = im_string.Text;
         }
-
         private void im_tag_TextChanged(object sender, EventArgs e)
         {
             presentIM.source = im_tag.Text;
         }
-
         private void im_format_SelectedIndexChanged(object sender, EventArgs e)
         {
             presentIM.format = im_format.Text;
         }
-
         private void im_unit_TextChanged(object sender, EventArgs e)
         {
             presentIM.unit = im_unit.Text;
         }
+        #endregion
 
     }
 }

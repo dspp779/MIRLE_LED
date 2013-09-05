@@ -12,6 +12,8 @@ namespace LED
 {
     public class TextImage
     {
+        private static List<TextImage> TextImagePool = new List<TextImage>();
+
         private static int counter = 0;
         private static int counterlock = 0;
 
@@ -37,6 +39,7 @@ namespace LED
         {
             _path = getTempPath();
             _img = DrawText(text, font, textColor, backColor);
+            TextImagePool.Add(this);
             _img.Save(_path, ImageFormat.Png);
             //File.SetAttributes(_path, FileAttributes.Hidden);
         }
@@ -44,8 +47,17 @@ namespace LED
         public void release()
         {
             File.Delete(_path);
+            TextImagePool.Remove(this);
         }
 
+
+        public static void releaseAll()
+        {
+            foreach (TextImage img in TextImagePool)
+            {
+                File.Delete(img.path);
+            }
+        }
 
         private static string getTempPath()
         {
@@ -80,9 +92,9 @@ namespace LED
             //first, create a dummy bitmap just to get a graphics object
             Image img = new Bitmap(1, 1);
             Graphics drawing = Graphics.FromImage(img);
-
+            
             //measure the string to see how big the image needs to be
-            SizeF textSize = drawing.MeasureString(text, font);
+            SizeF textSize = drawing.MeasureString(text, font, 240);
 
             //free up the dummy image and old graphics object
             img.Dispose();
@@ -99,7 +111,7 @@ namespace LED
             //create a brush for the text
             Brush textBrush = new SolidBrush(textColor);
 
-            drawing.DrawString(text, font, textBrush, 0, 0);
+            drawing.DrawString(text, font, textBrush, -3, 0);
 
             drawing.Save();
 
