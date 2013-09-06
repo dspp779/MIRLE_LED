@@ -54,16 +54,23 @@ namespace LED
         // constructor
         public TextImage(String text, Font font, Color textColor, Color backColor)
         {
+            // get available path
             _path = getTempPath();
+            // draw text image
             _img = DrawText(text, font, textColor, backColor);
+            // add to text image pool
             TextImagePool.Add(this);
+            // save the file
             _img.Save(_path, ImageFormat.Png);
+            // uncomment the below statement if you want to set temp file hidden
             //File.SetAttributes(_path, FileAttributes.Hidden);
         }
         // remove the temp image file
         public void release()
         {
+            // delete temp file
             File.Delete(_path);
+            // remove from text image pool
             TextImagePool.Remove(this);
         }
 
@@ -100,6 +107,7 @@ namespace LED
                     }
                     else
                     {
+                        // wait
                         SpinWait.SpinUntil(() => false, 200);
                     }
 
