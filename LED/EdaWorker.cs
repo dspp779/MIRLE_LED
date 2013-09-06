@@ -65,7 +65,7 @@ namespace LED
                     // reset effect
                     effect = 0;
                     // spinwait : wait delay time when a animated message sent; Otherwise, wait 1 sec
-                    SpinWait.SpinUntil(() => refreshSignal, e == 0 ? 1000 : LEDConfig.delayTime);
+                    SpinWait.SpinUntil(() => refreshSignal, e != 0 ? LEDConfig.delayTime : 1000);
                 }
             }
         }

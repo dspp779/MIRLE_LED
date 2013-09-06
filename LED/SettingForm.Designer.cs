@@ -118,10 +118,11 @@
             // label_help
             // 
             this.label_help.AutoSize = true;
+            this.label_help.Font = new System.Drawing.Font("新細明體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.label_help.ForeColor = System.Drawing.Color.Red;
-            this.label_help.Location = new System.Drawing.Point(13, 70);
+            this.label_help.Location = new System.Drawing.Point(13, 64);
             this.label_help.Name = "label_help";
-            this.label_help.Size = new System.Drawing.Size(53, 12);
+            this.label_help.Size = new System.Drawing.Size(83, 16);
             this.label_help.TabIndex = 15;
             this.label_help.Text = "label_help";
             // 

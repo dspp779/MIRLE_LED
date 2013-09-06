@@ -23,7 +23,7 @@ namespace LED
         }
 
         // initialize communication  configuration
-        public static void InitComm()
+        public static bool InitComm()
         {
             uint dwIPAddr = GetIP(LEDConfig.IpAddr);
             uint dwIDCode = GetIP(LEDConfig.IDCode);
@@ -32,6 +32,9 @@ namespace LED
             {
                 CP5200.CP5200_Net_Init(dwIPAddr, LEDConfig.port, dwIDCode, LEDConfig.timeout);
             }
+            // split to two screen : top and bottom
+            int nRet = CP5200.CP5200_Net_SplitScreen(Convert.ToByte(1), 240, 32, 2, new int[] { 0, 0, 240, 16, 0, 16, 240, 32 });
+            return nRet == 0;
         }
 
         // send text

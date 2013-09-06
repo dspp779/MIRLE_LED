@@ -37,6 +37,7 @@ namespace LED
         {
             try
             {
+                this.CenterToScreen();
                 // load net setting
                 loadConfig();
                 // load alarm setting
@@ -107,6 +108,7 @@ namespace LED
                 PreviewResult.Text = str;
                 // set colot
                 PreviewResult.ForeColor = Color.FromArgb(presentIM.color);
+                this.Refresh();
             }
         }
         internal void RefreshStatus(string str)
@@ -267,11 +269,11 @@ namespace LED
             int index = dataGridView_IM.CurrentRow.Index;
             // lock signal to ensure refresh signal consistency
 
+            im_colorButton.ForeColor = Color.FromArgb(IMList[index].color);
             im_string.Text = IMList[index].priorString;
             im_format.Text = IMList[index].format;
             im_tag.Text = IMList[index].source;
             im_unit.Text = IMList[index].unit;
-            im_colorButton.ForeColor = Color.FromArgb(IMList[index].color);
 
             EdaWorker.refresh(1);
         }
@@ -336,7 +338,11 @@ namespace LED
 
         private void button_ping_Click(object sender, EventArgs e)
         {
-            // To do : test LED connection 
+            label_help.Text = "Connecting...";
+            this.Refresh();
+            // test LED connection 
+            // init communication and refresh text of label_help as connection status 
+            label_help.Text = LEDConnection.InitComm() ? "Connection Success" : "Connection Fail";
         }
 
         #endregion
