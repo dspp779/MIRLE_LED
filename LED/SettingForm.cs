@@ -11,7 +11,6 @@ using INI;
 using System.Threading;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using GeFanuc.iFixToolkit.Adapter;
 using CPower_CSharp;
 using System.Runtime.InteropServices;
 
@@ -22,13 +21,11 @@ namespace LED
         // list of instant messages
         private List<IMSetting> IMList;
         // current message derived from textBoxes
-        private InstantMessage presentIM = new InstantMessage();
+        private InstantMessage presentIM = new InstantMessage("", "", "", "", 0);
 
-        // signal represent if refreshment is needed or not
-        private bool refreshSignal = false;
-        // synchronization lock for refreshsignal
-        private object signalLock = new object();
-                
+        // Eda refresh worker
+        EdaWorker EdaWorker;
+
         #region -- initialization --
 
         public SettingForm()
@@ -61,8 +58,7 @@ namespace LED
             // add event handler
             dataGridView_IM.SelectionChanged += new EventHandler(dataGridView_IM_SelectionChanged);
 
-            // start eda data refresh worker
-            ThreadPool.QueueUserWorkItem(new WaitCallback(MessageRefresher));
+            this.EdaWorker = new EdaWorker(presentIM);
         }
 
         private void loadConfig()
@@ -85,7 +81,7 @@ namespace LED
             // pre-create empty row
             dataGridView_IM.Rows.Add(IMList.Count);
 
-            // fill instant messages values
+            // fill instant message values
             int i = 0;
             foreach (IMSetting im in IMList)
             {
@@ -95,131 +91,45 @@ namespace LED
 
         #endregion
 
-        #region -- EDA message refresher --
-
-        // data refresh worker
-        private void MessageRefresher(object o)
-        {
-            while (true)
-            {
-                try
-                {
-                    // start eda data refresh worker
-                    RefreshMessageWorker(null);
-                    //ThreadPool.QueueUserWorkItem(new WaitCallback(RefreshMessageWorker));
-                }
-                catch (Exception ex)
-                {
-                    if (this.IsDisposed)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        try
-                        {
-                            RefreshMessage(ex.Message);
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                        }
-                    }
-                }
-                finally
-                {
-                    SpinWait.SpinUntil(() => refreshSignal, 1000);
-                }
-            }
-        }
-
-        private void RefreshMessageWorker(object o)
-        {
-            try
-            {
-                /* IMSetting is extention of InstanMessage
-                 * with the capability of field examination.
-                 * */
-                IMSetting ims = new IMSetting();
-                ims.set(presentIM);
-
-                refreshSignal = false;
-                // retrieve value from ifix EDA
-                float f;
-                short nErr = Eda.GetOneFloat(ims.node, ims.tag, ims.field, out f);
-                if (nErr != FixError.FE_OK)
-                {
-                    RefreshMessage("????");
-                }
-                else
-                {
-                    RefreshMessage(ims.getVal(f));
-                }
-            }
-            catch (DllNotFoundException)
-            {
-                RefreshMessage("ifix連接失敗");
-                RefreshStatus("請確認是否開啟ifix");
-            }
-            catch (FormatException ex)
-            {
-                RefreshMessage("格式錯誤" + ex.Message);
-            }
-
-        }
-
-        private void RefreshMessage(string str)
-        {
-            if (Disposing || IsDisposed)
-            {
-                return;
-            }
-
-            //CP5200_SendText(PreviewResult.Text);
-
-            // create temporal image
-            TextImage tempImg = new TextImage(str, LEDConfig.defaultFont, Color.FromArgb(presentIM.color), Color.Black);
-
-            try
-            {
-                // send temporal image
-                LEDConnection.CP5200_SendImg(tempImg);
-                //refresh preview area
-                Invoke(new UIHandler(RefreshPreview), new Object[] { str });
-            }
-            catch (Exception ex)
-            {
-                //refresh preview area
-                Invoke(new UIHandler(RefreshPreview), new Object[] { ex.Message });
-            }
-            finally
-            {
-                // delete temporal image
-                tempImg.release();
-            }
-        }
-
-        #endregion
-
         #region -- UI delegate --
 
+        // Here's delegate and refresh methods for UI modification
         delegate void UIHandler(string str);
-        private void RefreshPreview(string str)
+        internal void RefreshPreview(string str)
         {
-            PreviewResult.Text = str;
-            PreviewResult.ForeColor = Color.FromArgb(presentIM.color);
+            if (InvokeRequired)
+            {
+                Invoke(new UIHandler(RefreshPreview), new Object[] { str });
+            }
+            else
+            {
+                // set preview string
+                PreviewResult.Text = str;
+                // set colot
+                PreviewResult.ForeColor = Color.FromArgb(presentIM.color);
+            }
         }
-        private void RefreshStatus(string str)
+        internal void RefreshStatus(string str)
         {
-            Invoke(new UIHandler((o)=> toolStripStatusLabel.Text = str), new Object[] { null });
+            if (InvokeRequired)
+            {
+                Invoke(new UIHandler((o) => toolStripStatusLabel.Text = str), new Object[] { null });
+            }
+            else
+            {
+                toolStripStatusLabel.Text = str;
+            }
+
         }
 
         #endregion
 
-        #region -- IM manipulation --
+        #region -- IM dataGridView manipulation --
 
+        // message input method, include add and modify message
         private void inputIM()
         {
-            // modify selected cells
+            // if there's multiplc cell selected, modify alll selected cells to corresponding textBoxes value
             if (dataGridView_IM.SelectedCells.Count > 1)
             {
                 foreach (DataGridViewTextBoxCell cell in dataGridView_IM.SelectedCells)
@@ -227,16 +137,16 @@ namespace LED
                     setIMData(cell);
                 }
             }
-            // modify row the only selected cell belongs to
+            // if only one cell is selected, modify the row it belongs to
             else if (dataGridView_IM.SelectedCells.Count == 1)
             {
                 setIM(dataGridView_IM.CurrentRow.Index, presentIM.priorString, presentIM.source,
                     presentIM.format, presentIM.unit, presentIM.color);
             }
-            // add new row
+            // if none selected, add new message
             else
             {
-                // set im
+                // add im
                 addIM(presentIM.priorString, presentIM.source,
                     presentIM.format, presentIM.unit, presentIM.color);
             }
@@ -251,6 +161,7 @@ namespace LED
         }
         private void setIM(int index, string str, string tag, string format, string unit, int color)
         {
+            // set message value
             IMList[index].set(presentIM);
             // set dataGirdView row
             setRow(index, str, tag, format, unit, Color.FromArgb(color));
@@ -259,9 +170,9 @@ namespace LED
         // dataGirdView refresher
         private void addRow(string str, string tag, string format, string unit, Color color)
         {
-            // add row
+            // add an empty row
             dataGridView_IM.Rows.Add(1);
-            // set dataGridView row value
+            // fill the row value
             setRow(dataGridView_IM.Rows.Count - 1, str, tag, format, unit, color);
         }
         private void setRow(int index, string str, string tag, string format, string unit, Color color)
@@ -280,7 +191,7 @@ namespace LED
             int row = cell.RowIndex;
             int col = cell.ColumnIndex;
 
-            // set value to different column
+            // set column value to corresponding textBox
             if (col == IMData_string.Index)
             {
                 cell.Value = presentIM.priorString;
@@ -316,46 +227,58 @@ namespace LED
         // color button event handler
         private void im_colorButton_Click(object sender, EventArgs e)
         {
+            // show color dialog to choose character color
             if (im_colorDialog.ShowDialog() == DialogResult.OK)
             {
+                // set color button to the color user choose
                 im_colorButton.ForeColor = im_colorDialog.Color;
             }
         }
         // color button change event
         private void im_colorButton_ForeColorChanged(object sender, EventArgs e)
         {
+            // the fore color of color button is also the color of present message 
             presentIM.color = im_colorButton.ForeColor.ToArgb();
+
+            /* compute the gray scale of the fore color and set background color
+             * so that user can see color button clearly
+             * */
             Color c = im_colorButton.ForeColor;
+            // compute the lumanice
             int luma = (int)(c.R * 0.3 + c.G * 0.59 + c.B * 0.11);
+            // set background color for the color button
             im_colorButton.BackColor = luma < 128 ? Color.White : Color.Black;
         }
 
         //dataGridView handler
         private void dataGridView_IM_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
         {
+            // remove corresponding item in the list
             IMList.RemoveAt(e.RowIndex);
+            // save the modification
             LEDConfig.saveIMList(IMList);
         }
         // selection change reflect to textBoxes
         private void dataGridView_IM_SelectionChanged(object sender, EventArgs e)
         {
+            // any selection of cell in dataGridView are considered to modify
             inputButton.Text = "Set";
-
+            // set textBoxes to the value of the selected message
             int index = dataGridView_IM.CurrentRow.Index;
-            lock (signalLock)
-            {
-                im_string.Text = IMList[index].priorString;
-                im_format.Text = IMList[index].format;
-                im_tag.Text = IMList[index].source;
-                im_unit.Text = IMList[index].unit;
-                im_colorButton.ForeColor = Color.FromArgb(IMList[index].color);
-                refreshSignal = true;
-            }
+            // lock signal to ensure refresh signal consistency
+
+            im_string.Text = IMList[index].priorString;
+            im_format.Text = IMList[index].format;
+            im_tag.Text = IMList[index].source;
+            im_unit.Text = IMList[index].unit;
+            im_colorButton.ForeColor = Color.FromArgb(IMList[index].color);
+
+            EdaWorker.refresh(1);
         }
 
         private void textBox_IpPress(object sender, KeyPressEventArgs e)
         {
-            // ip allow digit and dot
+            // ip input only allow digit and dot
             e.Handled = !(digitTextBoxTest(e.KeyChar) || e.KeyChar == '.');
         }
         private void textBox_DigitPress(object sender, KeyPressEventArgs e)
@@ -369,10 +292,12 @@ namespace LED
             return Char.IsDigit(c) || Char.IsControl(c);
         }
 
+        // save ini setting button clicked
         private void button_save_Click(object sender, EventArgs e)
         {
             try
             {
+                // set config values
                 LEDConfig.IpAddr = textBox_IP.Text;
                 LEDConfig.port = int.Parse(textBox_port.Text);
                 LEDConfig.IDCode = textBox_idcode.Text;
@@ -380,11 +305,12 @@ namespace LED
             }
             catch (FormatException ex)
             {
+                // show exception message if there's any format exception
                 MessageBox.Show(ex.Message);
             }
             finally
             {
-                // refresh textBox
+                // refresh config textBoxes
                 loadConfig();
             }
         }
@@ -392,18 +318,19 @@ namespace LED
         {
             try
             {
+                // message input method, including add and modify.
                 inputIM();
-                // save modification
+                // save modification made
                 LEDConfig.saveIMList(IMList);
             }
-            catch (ArgumentException ex)
+            catch (FormatException ex)
             {
                 MessageBox.Show(ex.Message);
             }
 
-            // clear selection
+            // clear dataGridView selection
             dataGridView_IM.ClearSelection();
-            // reset input button
+            // reset input button to "Add" since all selection are cleared
             inputButton.Text = "Add";
         }
 
@@ -414,22 +341,29 @@ namespace LED
 
         #endregion
 
-        #region -- textBox change event --
+        #region -- message textBox change event --
+        /* here's the method of text changed event for message,
+         * which is that set current value to presentIM.
+         * */
         private void im_string_TextChanged(object sender, EventArgs e)
         {
             presentIM.priorString = im_string.Text;
+            EdaWorker.refresh();
         }
         private void im_tag_TextChanged(object sender, EventArgs e)
         {
             presentIM.source = im_tag.Text;
+            EdaWorker.refresh();
         }
         private void im_format_SelectedIndexChanged(object sender, EventArgs e)
         {
             presentIM.format = im_format.Text;
+            EdaWorker.refresh();
         }
         private void im_unit_TextChanged(object sender, EventArgs e)
         {
             presentIM.unit = im_unit.Text;
+            EdaWorker.refresh();
         }
         #endregion
 

@@ -45,6 +45,7 @@
             this.label_port = new System.Windows.Forms.Label();
             this.AlarmSetting = new System.Windows.Forms.TabPage();
             this.IMSetting = new System.Windows.Forms.TabPage();
+            this.im_unit = new System.Windows.Forms.ComboBox();
             this.inputButton = new System.Windows.Forms.Button();
             this.dataGridView_IM = new System.Windows.Forms.DataGridView();
             this.IMData_string = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -54,7 +55,6 @@
             this.IMData_color = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.PreviewResult = new System.Windows.Forms.TextBox();
             this.im_colorButton = new System.Windows.Forms.Button();
-            this.im_unit = new System.Windows.Forms.TextBox();
             this.label_unit = new System.Windows.Forms.Label();
             this.label_format = new System.Windows.Forms.Label();
             this.im_format = new System.Windows.Forms.ComboBox();
@@ -65,7 +65,6 @@
             this.im_colorDialog = new System.Windows.Forms.ColorDialog();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.EDABackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.Setting.SuspendLayout();
             this.LEDScreenSetting.SuspendLayout();
             this.groupBox_net.SuspendLayout();
@@ -230,11 +229,11 @@
             // 
             // IMSetting
             // 
+            this.IMSetting.Controls.Add(this.im_unit);
             this.IMSetting.Controls.Add(this.inputButton);
             this.IMSetting.Controls.Add(this.dataGridView_IM);
             this.IMSetting.Controls.Add(this.PreviewResult);
             this.IMSetting.Controls.Add(this.im_colorButton);
-            this.IMSetting.Controls.Add(this.im_unit);
             this.IMSetting.Controls.Add(this.label_unit);
             this.IMSetting.Controls.Add(this.label_format);
             this.IMSetting.Controls.Add(this.im_format);
@@ -250,6 +249,19 @@
             this.IMSetting.TabIndex = 2;
             this.IMSetting.Text = "即時資訊設定";
             this.IMSetting.UseVisualStyleBackColor = true;
+            // 
+            // im_unit
+            // 
+            this.im_unit.FormattingEnabled = true;
+            this.im_unit.Items.AddRange(new object[] {
+            "kg/cm2",
+            "°C",
+            "°F"});
+            this.im_unit.Location = new System.Drawing.Point(493, 44);
+            this.im_unit.Name = "im_unit";
+            this.im_unit.Size = new System.Drawing.Size(89, 20);
+            this.im_unit.TabIndex = 14;
+            this.im_unit.TextChanged += new System.EventHandler(this.im_unit_TextChanged);
             // 
             // inputButton
             // 
@@ -342,18 +354,10 @@
             this.im_colorButton.ForeColorChanged += new System.EventHandler(this.im_colorButton_ForeColorChanged);
             this.im_colorButton.Click += new System.EventHandler(this.im_colorButton_Click);
             // 
-            // im_unit
-            // 
-            this.im_unit.Location = new System.Drawing.Point(485, 43);
-            this.im_unit.Name = "im_unit";
-            this.im_unit.Size = new System.Drawing.Size(100, 22);
-            this.im_unit.TabIndex = 9;
-            this.im_unit.TextChanged += new System.EventHandler(this.im_unit_TextChanged);
-            // 
             // label_unit
             // 
             this.label_unit.AutoSize = true;
-            this.label_unit.Location = new System.Drawing.Point(481, 28);
+            this.label_unit.Location = new System.Drawing.Point(494, 30);
             this.label_unit.Name = "label_unit";
             this.label_unit.Size = new System.Drawing.Size(29, 12);
             this.label_unit.TabIndex = 8;
@@ -467,7 +471,6 @@
         private System.Windows.Forms.TabPage LEDScreenSetting;
         private System.Windows.Forms.TabPage AlarmSetting;
         private System.Windows.Forms.TabPage IMSetting;
-        private System.Windows.Forms.TextBox im_unit;
         private System.Windows.Forms.Label label_unit;
         private System.Windows.Forms.Label label_format;
         private System.Windows.Forms.ComboBox im_format;
@@ -490,7 +493,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn IMData_unit;
         private System.Windows.Forms.DataGridViewTextBoxColumn IMData_color;
         private System.Windows.Forms.Button button_save;
-        private System.ComponentModel.BackgroundWorker EDABackgroundWorker;
         private System.Windows.Forms.Label label_idcode;
         private System.Windows.Forms.TextBox textBox_idcode;
         private System.Windows.Forms.Label label_port;
@@ -500,6 +502,7 @@
         private System.Windows.Forms.GroupBox groupBox_net;
         private System.Windows.Forms.Button button_ping;
         private System.Windows.Forms.Label label_help;
+        private System.Windows.Forms.ComboBox im_unit;
 
     }
 }

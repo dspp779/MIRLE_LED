@@ -19,40 +19,43 @@ namespace LED
             get;
             set;
         }
-
         public virtual string source
         {
             get;
             set;
         }
-
         public virtual string format
         {
             get;
             set;
         }
-
         public virtual string unit
         {
             get;
             set;
         }
-
         public virtual int color
         {
             get;
             set;
         }
 
-        public void set(InstantMessage im)
+        public InstantMessage(InstantMessage im)
         {
-            this.priorString = im.priorString;
-            this.source = im.source;
-            this.format = im.format;
-            this.unit = im.unit;
-            this.color = im.color;
+            set(im);
         }
 
+        public InstantMessage(string str, string tag, string format, string unit, int color)
+        {
+            set(str, tag, format, unit, color);
+        }
+        
+        // set value from InstantMessage
+        public void set(InstantMessage im)
+        {
+            set(im.priorString, im.source, im.format, im.unit, im.color);
+        }
+        // set vallue from values
         public void set(string str, string tag, string format, string unit, int color)
         {
             this.priorString = str;
